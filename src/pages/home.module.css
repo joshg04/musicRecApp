@@ -1,0 +1,42 @@
+.container{
+    width: 100vw;
+    height: 100vh;
+    background-color: #F5F5DC;
+}
+
+.centerContainer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    height: 100%;
+}
+
+.header1{
+    color: black;
+}
+
+.input{
+    padding: 8px;
+    border: 1px solid black;
+    border-radius: 10px;
+    width: 20%;
+    display: flex;
+    
+}
+
+.form{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.authBtns{
+    display: flex;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    gap: 0.5rem;
+}

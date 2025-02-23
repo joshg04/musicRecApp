@@ -1,0 +1,21 @@
+.container{
+    border-right: 2px solid black;
+    background-color: #145C1A;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 20%;
+}
+
+.btnContainer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.btn{
+    width: 20%;
+}
