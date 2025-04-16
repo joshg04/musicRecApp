@@ -2,6 +2,9 @@ import express from "express"
 import cors from "cors"
 import router from './routes/router.js'
 import spotifyRouter from './routes/spotifyRoute.js'
+import dbRouter from './routes/dbRouter.js'
+
+
 const app = express()
 const port = 5000
 app.use(cors());
@@ -18,6 +21,7 @@ app.get('/', (req, res) => {
 
 app.use('/api', router)
 app.use('/spotify', spotifyRouter)
+app.use('/database', dbRouter)
   
 
 

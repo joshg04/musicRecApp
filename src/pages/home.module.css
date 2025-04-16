@@ -1,7 +1,7 @@
 .container{
     width: 100vw;
     height: 100vh;
-    background-color: #F5F5DC;
+    background-color: #F4F4F6;
 }
 
 .centerContainer{
@@ -20,7 +20,7 @@
 .input{
     padding: 8px;
     border: 1px solid black;
-    border-radius: 10px;
+    border-radius: 20px;
     width: 20%;
     display: flex;
     
@@ -39,4 +39,5 @@
     top: 10px;
     right: 10px;
     gap: 0.5rem;
+
 }

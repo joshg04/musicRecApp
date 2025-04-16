@@ -7,70 +7,121 @@ const API_KEY = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({ apiKey: API_KEY });
 
 //step 1: Take user input & return list of 5 artists
+// router.post('/', async (req, res) => {
+//   const userPrompt = req.body;
+
+//   console.log(userPrompt.text)
+
+//   const prompt = `You are a music recommendation assistant.
+
+//   The user will give you a song and artist, and your job is to recommend 5 fresh, emotionally or stylistically similar songs. These should reflect the same vibe, mood, genre, or lyrical tone — not just artists from the same label.
+  
+//   🛑 Rules:
+//   - No repeating artists or songs from previous outputs unless highly relevant
+//   - Be creative, avoid obvious suggestions unless necessary
+//   - Don’t recommend anything already mentioned in the prompt
+//   - Return strictly JSON. No extra text, no markdown
+
+//     {
+//       "artists": [
+//         {
+//           "name": "Artist Name",
+//           "song": "Song"
+//         },
+//         {
+//           "name": "Another Artist",
+//           "song": "Song A"
+//         }
+//       ]
+//     }
+
+//     Only return the JSON object. Do not include any text or explanations.`
+
+//   const completion = await openai.chat.completions.create({
+//     model: "gpt-4o",
+//     messages: [
+//       { role: "system", content: "You are a music recommendation AI assistant. The user will provide an artist and a song, and your task is to recommend 5 similar artists and songs" },
+//       {
+//         role: "user",
+//         content: `${prompt}`,
+//       },
+//     ],
+//     store: true,
+//   });
+
+//   const response = completion.choices[0].message.content
+//   const jsonText = JSON.parse(response)
+//   console.log(jsonText)
+
+//   const filteredData = jsonText.artists.map(artist => ({
+//     name: artist.name,
+//     song: artist.song
+//   }))
+
+//   console.log(filteredData)
+//   res.json(filteredData);
+// })
+
 router.post('/', async (req, res) => {
-  const userPrompt = req.body;
+  const userPrompt = req.body.text
 
-  console.log(userPrompt.text)
+  if (!userPrompt) {
+    return res.status(400).json({ error: 'Missing "text" in request body' })
+  }
 
-  const prompt = `Provide a list of music artists and song recommendations similar to ${userPrompt} based on these criteria:
-    1. **Genre Match** - Ensure recommendations fall within the same genre or a highly related subgenre.
-    2. **Musical Style** - Consider instrumentation, production style, and typical elements of the provided song.
-    3. **Mood & Atmosphere** - Match the emotional feel (e.g., energetic, melancholic, chill, aggressive).
-    4. **Tempo & Rhythm** - Avoid vastly different BPM (beats per minute) unless necessary for mood consistency.
-    5. **Artist Similarity** - Prioritize artists who are commonly recommended alongside the given artist.
-    in JSON format. 
+  const systemMessage = `
+You are a music recommendation expert.
 
-     **Response Instructions:**
-- **ONLY return JSON, no explanations, no markdown.**
-- **Do not wrap the response in triple backticks
-    
-    Ensure the response follows this exact structure:
+The user will ask for music that matches the *vibe* or *energy* of a specific song, artist, or genre.
 
-    {
-      "artists": [
-        {
-          "name": "Artist Name",
-          "song": "Song"
-        },
-        {
-          "name": "Another Artist",
-          "song": "Song A"
-        }
-      ]
+Your job is to recommend 5 songs that capture a similar mood, genre, or emotion.
+
+🎯 Format your recommendations like this:
+"Song Title" by Artist Name
+
+DO NOT use markdown, backticks, or JSON formatting.
+DO NOT include the original song or artist in your recommendations.
+Just give a clean, human response. 
+`
+
+  const userMessage = `Recommend songs based on this: "${userPrompt}". Focus on vibe.`
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 1.0,
+      top_p: 1.0,
+    })
+
+    let raw = completion.choices[0].message.content
+    console.log('🧠 GPT Raw Output:\n', raw)
+
+    // 🧼 Clean the response: remove extra whitespace, trim lines
+    raw = raw.trim()
+
+    // 🧠 Regex: match lines like "Sunflower" by Rex Orange County
+    const matches = [...raw.matchAll(/"(.+?)"\s+by\s+(.+)/gi)]
+
+    if (!matches.length) {
+      return res.status(422).json({ error: 'Could not parse song recommendations.' })
     }
 
-    Ensure that your recommendations are relevant, taking into account factors like genre, tempo, instrumentation, and general audience preferences. If the user provides an obscure artist or song, try to find the closest well-known matches.
-    Only return the JSON object. Do not include any text or explanations.`
+    const recommendations = matches.map(([_, song, artist]) => ({
+      song: song.trim(),
+      name: artist.trim().replace(/^[-\d.()\s]+/, '') // removes leading "1.", "-", etc
+    }))
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: "You are a music recommendation AI assistant. The user will provide an artist and a song, and your task is to recommend 5 similar artists and songs based on genre, musical style, mood" },
-      {
-        role: "user",
-        content: `${prompt}`,
-      },
-    ],
-    store: true,
-  });
+    console.log('✅ Parsed Recommendations:\n', recommendations)
+    res.json(recommendations)
 
-  const response = completion.choices[0].message.content
-  const jsonText = JSON.parse(response)
-  console.log(jsonText)
-
-  const filteredData = jsonText.artists.map(artist => ({
-    name: artist.name,
-    song: artist.song
-  }))
-
-  console.log(filteredData)
-  res.json(filteredData);
+  } catch (err) {
+    console.error('❌ Error during recommendation generation:', err)
+    res.status(500).json({ error: 'Failed to generate song recommendations.' })
+  }
 })
-
-//step 2: Use Spotify search endpoint to turn all artists to artist_ID
-
-//step 3: Artist top tracks end point to return song recommendations
-
-//step 4: pass back json of artists and song recs
 
 export default router
